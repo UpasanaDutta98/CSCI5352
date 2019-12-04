@@ -4,12 +4,12 @@ import requests
 from lxml import etree
 from bs4 import BeautifulSoup 
 import networkx as nx
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class NX5352:
 
-    def __init__(self, data_path):
-        pass # TODO
+    def __init__(self, data_path = "/"):
+        self.user_to_domain_map = None
 
     def get_domains_per_user(self):
         """
@@ -37,6 +37,8 @@ class NX5352:
                 users[int(t_u["AccountId"])].append(i)
                 users_count[int(t_u["AccountId"])] += 1
                 el.clear()
+
+        self.user_to_domain_map = users
 
         return users, users_count
 
@@ -71,7 +73,7 @@ class NX5352:
 
         # user_domain_count is the users_count dictionary from get_domain_per_users
 
-        edgelist = set() # misleading name: sorry about that
+        edgelist = list()
         nodelist = list()
 
         d = self.get_all_files(dir_name = "data", file_name = "Posts.xml")
@@ -84,6 +86,7 @@ class NX5352:
 
         tmp = set() # now add all other nodes here
         for i in d:
+            domain_edgelist = []
             t = self.get_xml_generator(d[i], html = True)
             for ev, el in t:
                 t_d = el.attrib
@@ -92,17 +95,25 @@ class NX5352:
                     continue
 
                 se_id = user_map[i][int(t_d["owneruserid"])]
+
                 if user_domain_count[se_id] > 1:
                     # ignore if participant is only in one domain
-                    edgelist.add((se_id, i))
+                    domain_edgelist.append((se_id, i))
                     tmp.add(se_id)
 
                 el.clear()
 
+            # now let's find the q/a frequency (posts are either questions or answers) 
+            participation = Counter(domain_edgelist)
+            for k, v in participation.items():
+                edgelist.append((k[0], k[1], v))
+
+            del domain_edgelist, participation
+
         nodelist.append(list(tmp))
         del tmp, t
 
-        return list(edgelist), nodelist
+        return edgelist, nodelist
 
 
 
