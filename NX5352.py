@@ -107,11 +107,13 @@ class NX5352:
             participation = Counter(domain_edgelist)
             for k, v in participation.items():
                 edgelist.append((k[0], k[1], v))
-
-            del domain_edgelist, participation
+            
+            print(i) # printing for sanity!
+            
+            del domain_edgelist, participation, t
 
         nodelist.append(list(tmp))
-        del tmp, t
+        del tmp
 
         return edgelist, nodelist
 
