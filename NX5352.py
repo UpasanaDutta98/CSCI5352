@@ -119,14 +119,42 @@ class NX5352:
 
 
 
-    def get_tag_domain_participation_edgelist(self, tag_map, tag_domain_count):
-        raise NotImplementedError
+    def get_tag_domain_participation_edgelist(self):
+        d = self.get_domains_per_tag()
+
+        edgelist = []
+
+        for t in d:
+            p = list(set(d[t]))
+            for i in p:
+                edgelist.append((t, i[0], i[1]))
+        
+        return edgelist
 
 
 
-    def get_user_domain_activity(self, user_map):
-        raise NotImplementedError
+    def get_domains_per_tag(self):
+        '''
+        returns dict(): tag -> [(domain_name, count)]
+        '''
+        d = self.get_all_files(dir_name = "data", file_name = "Tags.xml")
 
+        tag_domain_map = dict()
+
+        for i in d:
+            t = self.get_xml_generator(d[i], html = False)
+
+            for ev, el in t:
+                t_d = el.attrib
+            
+                try:
+                    tag_domain_map[t_d["TagName"]]
+                except KeyError:
+                    tag_domain_map[t_d["TagName"]] = list()
+
+                tag_domain_map[t_d["TagName"]].append((i, int(t_d["Count"])))
+        
+        return tag_domain_map
 
 
 
@@ -155,12 +183,6 @@ class NX5352:
                 el.clear()
         
         return user_map
-
-
-
-    def get_tag_map(self):
-        # TODO!
-        raise NotImplementedError
 
 
 
